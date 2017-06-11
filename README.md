@@ -26,7 +26,7 @@ An computer vision project, based on cimg library and svm training, to classify 
 ## 3. Implementation Procedure
 1. Find the 4 vertices of the paper
 1. Modify the paper into a standard A4 paper
-1. Segmentation of the numbers:
+1. Segmentation of the numbers in order:
     - Convert into binary image
     - Implement dilation to thicken the number
     - Divide the source image into line item (divide numbers each line)
@@ -38,11 +38,11 @@ An computer vision project, based on cimg library and svm training, to classify 
 ---
 
 ## 4. Result Screenshots
-- 4 vertices of the paper
-- A4 paper modification
+- 4 vertices of the paper & A4 paper modification
+![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/1.png)
 - Segmentation of the numbers:
-    - Binary image with dilation
-    - Divided Image
-    - Each single number has been circled
-    - Divided into single numbers
+    - Binary image with dilation & Divided Image & Circled single number
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/2.png)
+    - Divided into single numbers in order
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/singleNumbers.png)
 
