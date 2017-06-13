@@ -39,10 +39,14 @@ An computer vision project, based on cimg library and svm training, to classify 
 
 ## 4. Result Screenshots
 - 4 vertices of the paper & A4 paper modification
+
 ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/1.png)
 - Segmentation of the numbers:
+
     - Binary image with dilation & Divided Image & Circled single number
+    
     ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/2.png)
     - Divided into single numbers in order
+    
     ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/singleNumbers.png)
 
