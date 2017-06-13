@@ -14,7 +14,7 @@ ImageSegmentation::ImageSegmentation(const CImg<int>& _SrcImg) {
 ImageSegmentation::~ImageSegmentation() {
 }
 
-//XY方向的扩张
+//XY方向的正扩张
 int getDilationIntensityXY(const CImg<int>& Img, int x, int y) {
 	int intensity = Img(x, y, 0);
 	if (intensity == 255) {
@@ -35,7 +35,7 @@ int getDilationIntensityXY(const CImg<int>& Img, int x, int y) {
 	}
 	return intensity;
 }
-//Y方向的扩张
+//Y方向的正扩张
 int getDilationIntensityY(const CImg<int>& Img, int x, int y) {
 	int intensity = Img(x, y, 0);
 	if (intensity == 255) {
@@ -47,6 +47,77 @@ int getDilationIntensityY(const CImg<int>& Img, int x, int y) {
 				}
 			}
 		}
+	}
+	return intensity;
+}
+
+//X方向2个单位的负扩张，Y方向2个单位的正扩张
+int getDilationIntensityXXYY(const CImg<int>& Img, int x, int y) {
+	int intensity = Img(x, y, 0);
+	if (intensity == 255) {    //若中间点为白色
+		int blackAccu = 0;
+
+		for (int i = -2; i <= 2; i++) {
+			if (0 <= y + i && y + i < Img._height) {    //垂直方向累加
+				if (Img(x, y + i, 0) == 0)
+					blackAccu++;
+			}
+			if (0 <= x + i && x + i < Img._width) {     //水平方向累减
+				if (Img(x + i, y, 0) == 0)
+					blackAccu--;
+			}
+		}
+
+		if (blackAccu > 0)
+			intensity = 0;
+	}
+	return intensity;
+}
+
+//X方向2个单位的负扩张，Y方向1个单位的正扩张
+int getDilationIntensityXXY(const CImg<int>& Img, int x, int y) {
+	int intensity = Img(x, y, 0);
+	if (intensity == 255) {    //若中间点为白色
+		int blackAccu = 0;
+
+		for (int i = -1; i <= 1; i++) {
+			if (0 <= y + i && y + i < Img._height) {    //垂直方向累加
+				if (Img(x, y + i, 0) == 0)
+					blackAccu++;
+			}
+		}
+		for (int i = -2; i <= 2; i++) {
+			if (0 <= x + i && x + i < Img._width) {     //水平方向累减
+				if (Img(x + i, y, 0) == 0)
+					blackAccu--;
+			}
+		}
+
+		if (blackAccu > 0)
+			intensity = 0;
+	}
+	return intensity;
+}
+
+//X方向1个单位的负扩张，Y方向1个单位的正扩张
+int getDilationIntensityXrY(const CImg<int>& Img, int x, int y) {
+	int intensity = Img(x, y, 0);
+	if (intensity == 255) {    //若中间点为白色
+		int blackAccu = 0;
+
+		for (int i = -1; i <= 1; i++) {
+			if (0 <= y + i && y + i < Img._height) {    //垂直方向累加
+				if (Img(x, y + i, 0) == 0)
+					blackAccu++;
+			}
+			if (0 <= x + i && x + i < Img._width) {     //水平方向累减
+				if (Img(x + i, y, 0) == 0)
+					blackAccu--;
+			}
+		}
+
+		if (blackAccu > 0)
+			intensity = 0;
 	}
 	return intensity;
 }
@@ -77,17 +148,24 @@ void ImageSegmentation::processBinaryImage(bool doDilationY) {
 		answerXY(x, y, 0) = intensity;
 	}
 
-	if (doDilationY) {
-		//扩张Dilation Y方向
-		CImg<int> answerY = CImg<int>(answerXY._width, answerXY._height, 1, 1, 0);
-		cimg_forXY(answerXY, x, y) {
-			int intensity = getDilationIntensityY(answerXY, x, y);
-			answerY(x, y, 0) = intensity;
-		}
-		BinaryImg = answerY;
+	//if (doDilationY) {
+	//	//扩张Dilation Y方向
+	//	CImg<int> answerY = CImg<int>(answerXY._width, answerXY._height, 1, 1, 0);
+	//	cimg_forXY(answerXY, x, y) {
+	//		int intensity = getDilationIntensityY(answerXY, x, y);
+	//		answerY(x, y, 0) = intensity;
+	//	}
+	//	BinaryImg = answerY;
+	//}
+	//else
+	//	BinaryImg = answerXY;
+
+	CImg<int> answerXXY = CImg<int>(answerXY._width, answerXY._height, 1, 1, 0);
+	cimg_forXY(answerXY, x, y) {
+		int intensity = getDilationIntensityXXY(answerXY, x, y);
+		answerXXY(x, y, 0) = intensity;
 	}
-	else
-		BinaryImg = answerXY;
+	BinaryImg = answerXXY;
 }
 
 CImg<int> ImageSegmentation::getBinaryImage() {

@@ -13,7 +13,7 @@ int main() {
 	CImg<int> SrcImg, GrayImg, DownSampledImg, CannyImg, HoughSpaceImg, 
 		Edge_Point_Img, SrcImgWithVertexAndEdge, PaperModifiedImg;
 	/*
-	SrcImg.load_bmp("Input/5.bmp");
+	SrcImg.load_bmp("Input/3.bmp");
 
 	GrayImg = grayTheImg(SrcImg);
 	//GrayImg.display("GrayImg");
@@ -45,11 +45,11 @@ int main() {
 	cout << endl << endl << "==== PaperModification End: " << end - start << " seconds is used." << endl << endl;
 
 	PaperModifiedImg.display("Paper Modified Image");
-	//PaperModifiedImg.save("Output/Modification/5-Modification.bmp");
+	//PaperModifiedImg.save("Output/Modification/3-Modification.bmp");
 	*/
 
 	//测试模式读取文件
-	PaperModifiedImg.load_bmp("Output/Modification/5-Modification.bmp");
+	PaperModifiedImg.load_bmp("Output/Modification/3-Modification.bmp");
 	// 以下为数字提取识别部分
 
 	CImg<int> NewGraySrcImg, BinaryImg, HistogramImage, DividingImg, 
@@ -61,21 +61,25 @@ int main() {
 	myImageSegmentation.processBinaryImage(false);
 	BinaryImg = myImageSegmentation.getBinaryImage();
 	BinaryImg.display("Binary Img");
-	//BinaryImg.save("Output/BinaryImage/withDilationY/5-BinaryImage.bmp");
-	
+	BinaryImg.save("Output/BinaryImage/Dilation-X-X-X-XYY/3-BinaryImage.bmp");
+
+	/*
 	myImageSegmentation.numberSegmentationMainProcess();
 	HistogramImage = myImageSegmentation.getHistogramImage();
 	HistogramImage.display("Histogram Image");
-	//HistogramImage.save("Output/HistogramImage/5-HistogramImage.bmp");
+	//HistogramImage.save("Output/HistogramImage/3-HistogramImage.bmp");
 	DividingImg = myImageSegmentation.getImageWithDividingLine();
 	DividingImg.display("Image With Dividing Line");
 	ColoredNumberDividedImg = myImageSegmentation.getColoredNumberDividedImg();
 	ColoredNumberDividedImg.display("Colored Number Divided Img");
-	//ColoredNumberDividedImg.save("Output/ColoredNumberDividedImg/5-ColoredNumberDividedImg.bmp");
+	//ColoredNumberDividedImg.save("Output/ColoredNumberDividedImg/3-ColoredNumberDividedImg.bmp");
 	NumberDividedCircledImg = myImageSegmentation.getNumberDividedCircledImg();
 	NumberDividedCircledImg.display("Number Divided Circled Img");
-	//NumberDividedCircledImg.save("Output/NumberDividedCircledImg/5-NumberDividedCircledImg.bmp");
+	//NumberDividedCircledImg.save("Output/NumberDividedCircledImg/3-NumberDividedCircledImg.bmp");
 
-	myImageSegmentation.saveSingleNumberImage("Output/SingleNumberImage/5/");
+	myImageSegmentation.saveSingleNumberImage("Output/SingleNumberImage/3/");
+
+	*/
+
 	return 0;
 }
