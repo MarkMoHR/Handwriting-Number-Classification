@@ -13,6 +13,9 @@ using namespace cimg_library;
 #define Infinite 249480
 
 #define SingleNumberImgBoundary 5
+#define HistogramValleyMaxPixelNumber 0
+
+#define SubImgBlackPixelPercentage 0.001
 
 struct PointPos {
 	int x;
@@ -26,7 +29,7 @@ public:
 	ImageSegmentation(const CImg<int>& _SrcImg);
 	~ImageSegmentation();
 
-	void processBinaryImage(bool doDilationY);    //处理成二值图像
+	void processBinaryImage();                    //处理成二值图像
 	CImg<int> getBinaryImage();                   //获取二值图像
 
 	void numberSegmentationMainProcess();         //处理数字字符划分
@@ -43,6 +46,9 @@ private:
 
 	//通过分割线，将图片划分为一行行的数字
 	void divideIntoBarItemImg();
+
+	//对每一张划分的图的数字，做扩张
+	void doDilationForEachBarItemImg(int barItemIndex);
 
 	//连通区域标记算法
 	void connectedRegionsTagging();

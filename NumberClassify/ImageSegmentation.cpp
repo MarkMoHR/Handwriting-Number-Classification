@@ -35,6 +35,21 @@ int getDilationIntensityXY(const CImg<int>& Img, int x, int y) {
 	}
 	return intensity;
 }
+//X方向的正扩张
+int getDilationIntensityX(const CImg<int>& Img, int x, int y) {
+	int intensity = Img(x, y, 0);
+	if (intensity == 255) {
+		for (int i = -1; i <= 1; i++) {
+			if (0 <= x + i && x + i < Img._width) {
+				if (Img(x + i, y, 0) == 0) {
+					intensity = 0;
+					break;
+				}
+			}
+		}
+	}
+	return intensity;
+}
 //Y方向的正扩张
 int getDilationIntensityY(const CImg<int>& Img, int x, int y) {
 	int intensity = Img(x, y, 0);
@@ -122,50 +137,26 @@ int getDilationIntensityXrY(const CImg<int>& Img, int x, int y) {
 	return intensity;
 }
 
-void ImageSegmentation::processBinaryImage(bool doDilationY) {
-	CImg<int> tmpAnswer = CImg<int>(SrcGrayImg._width, SrcGrayImg._height, 1, 1, 0);
+void ImageSegmentation::processBinaryImage() {
+	CImg<int> answer = CImg<int>(SrcGrayImg._width, SrcGrayImg._height, 1, 1, 0);
 
-	cimg_forXY(tmpAnswer, x, y) {
+	cimg_forXY(answer, x, y) {
 		int intensity = SrcGrayImg(x, y, 0);
 
 		//先去掉黑色边缘
 		if (x <= BoundaryRemoveGap || y <= BoundaryRemoveGap
 			|| x >= imgW - BoundaryRemoveGap || y >= imgH - BoundaryRemoveGap) {
-			tmpAnswer(x, y, 0) = 255;
+			answer(x, y, 0) = 255;
 		}
 		else {
 			if (intensity < BinaryGap)
-				tmpAnswer(x, y, 0) = 0;
+				answer(x, y, 0) = 0;
 			else
-				tmpAnswer(x, y, 0) = 255;
+				answer(x, y, 0) = 255;
 		}
 	}
 
-	//扩张Dilation XY方向
-	CImg<int> answerXY = CImg<int>(tmpAnswer._width, tmpAnswer._height, 1, 1, 0);
-	cimg_forXY(tmpAnswer, x, y) {
-		int intensity = getDilationIntensityXY(tmpAnswer, x, y);
-		answerXY(x, y, 0) = intensity;
-	}
-
-	//if (doDilationY) {
-	//	//扩张Dilation Y方向
-	//	CImg<int> answerY = CImg<int>(answerXY._width, answerXY._height, 1, 1, 0);
-	//	cimg_forXY(answerXY, x, y) {
-	//		int intensity = getDilationIntensityY(answerXY, x, y);
-	//		answerY(x, y, 0) = intensity;
-	//	}
-	//	BinaryImg = answerY;
-	//}
-	//else
-	//	BinaryImg = answerXY;
-
-	CImg<int> answerXXY = CImg<int>(answerXY._width, answerXY._height, 1, 1, 0);
-	cimg_forXY(answerXY, x, y) {
-		int intensity = getDilationIntensityXXY(answerXY, x, y);
-		answerXXY(x, y, 0) = intensity;
-	}
-	BinaryImg = answerXXY;
+	BinaryImg = answer;
 }
 
 CImg<int> ImageSegmentation::getBinaryImage() {
@@ -207,11 +198,13 @@ void ImageSegmentation::findDividingLine() {
 
 		//判断是否为拐点
 		if (y > 0) {
-			if (blackPixel == 0 && HistogramImage(0, y - 1, 0) == 0) {    //下白上黑：取下
+			if (blackPixel <= HistogramValleyMaxPixelNumber 
+				&& HistogramImage(HistogramValleyMaxPixelNumber, y - 1, 0) == 0) {    //下白上黑：取下
 				inflectionPointSet.push_back(y);
 				//HistogramImage.draw_line(0, y, HistogramImage._width - 1, y, lineColor);
 			}
-			else if (blackPixel != 0 && HistogramImage(0, y - 1, 0) != 0) {    //下黑上白：取上
+			else if (blackPixel > HistogramValleyMaxPixelNumber
+				&& HistogramImage(HistogramValleyMaxPixelNumber, y - 1, 0) != 0) {    //下黑上白：取上
 				inflectionPointSet.push_back(y - 1);
 				//HistogramImage.draw_line(0, y - 1, HistogramImage._width - 1, y - 1, lineColor);
 			}
@@ -224,28 +217,74 @@ void ImageSegmentation::findDividingLine() {
 		for (int i = 1; i < inflectionPointSet.size() - 1; i = i + 2) {
 			int divideLinePoint = (inflectionPointSet[i] + inflectionPointSet[i + 1]) / 2;
 			divideLinePointSet.push_back(divideLinePoint);
-			HistogramImage.draw_line(0, divideLinePoint, HistogramImage._width - 1, divideLinePoint, lineColor);
-			DividingImg.draw_line(0, divideLinePoint, HistogramImage._width - 1, divideLinePoint, lineColor);
 		}
 	}
 	divideLinePointSet.push_back(BinaryImg._height - 1);
 }
 
 void ImageSegmentation::divideIntoBarItemImg() {
+	vector<int> newDivideLinePointSet;
+	int lineColor[3]{ 255, 0, 0 };
+
 	for (int i = 1; i < divideLinePointSet.size(); i++) {
 		int barHright = divideLinePointSet[i] - divideLinePointSet[i - 1];
+		int blackPixel = 0;
 		CImg<int> barItemImg = CImg<int>(BinaryImg._width, barHright, 1, 1, 0);
 		cimg_forXY(barItemImg, x, y) {
 			barItemImg(x, y, 0) = BinaryImg(x, divideLinePointSet[i - 1] + 1 + y, 0);
+			if (barItemImg(x, y, 0) == 0)
+				blackPixel++;
 		}
-		subImageSet.push_back(barItemImg);
-		barItemImg.display("barItemImg");
+
+		double blackPercent = (double)blackPixel / (double)(BinaryImg._width * barHright);
+		cout << "blackPercent " << blackPercent << endl;
+		if (blackPercent > SubImgBlackPixelPercentage) {
+			subImageSet.push_back(barItemImg);
+			newDivideLinePointSet.push_back(divideLinePointSet[i - 1]);
+			//barItemImg.display("barItemImg");
+
+			if (i > 1) {
+				HistogramImage.draw_line(0, divideLinePointSet[i - 1], HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
+				DividingImg.draw_line(0, divideLinePointSet[i - 1], HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
+			}
+		}
 	}
+	divideLinePointSet.clear();
+	for (int i = 0; i < newDivideLinePointSet.size(); i++)
+		divideLinePointSet.push_back(newDivideLinePointSet[i]);
 }
 
 void ImageSegmentation::connectedRegionsTagging() {
 	for (int i = 0; i < subImageSet.size(); i++) {
+		doDilationForEachBarItemImg(i);
 		connectedRegionsTaggingOfBarItemImg(i);
+	}
+}
+
+void ImageSegmentation::doDilationForEachBarItemImg(int barItemIndex) {
+	//扩张Dilation -X-X-X-XYY方向
+	CImg<int> answerXXY = CImg<int>(subImageSet[barItemIndex]._width, subImageSet[barItemIndex]._height, 1, 1, 0);
+	cimg_forXY(subImageSet[barItemIndex], x, y) {
+		int intensity = getDilationIntensityXXY(subImageSet[barItemIndex], x, y);
+		answerXXY(x, y, 0) = intensity;
+	}
+
+	//扩张Dilation -X-X-X-XYY方向
+	CImg<int> answerXXY2 = CImg<int>(answerXXY._width, answerXXY._height, 1, 1, 0);
+	cimg_forXY(answerXXY, x, y) {
+		int intensity = getDilationIntensityXXY(answerXXY, x, y);
+		answerXXY2(x, y, 0) = intensity;
+	}
+
+	//扩张Dilation XY方向
+	CImg<int> answerXY = CImg<int>(answerXXY2._width, answerXXY2._height, 1, 1, 0);
+	cimg_forXY(answerXXY2, x, y) {
+		int intensity = getDilationIntensityXY(answerXXY2, x, y);
+		answerXY(x, y, 0) = intensity;
+	}
+
+	cimg_forXY(subImageSet[barItemIndex], x, y) {
+		subImageSet[barItemIndex](x, y, 0) = answerXY(x, y, 0);
 	}
 }
 
@@ -277,7 +316,7 @@ void ImageSegmentation::connectedRegionsTaggingOfBarItemImg(int barItemIndex) {
 				if (minTagPointPos.x != -1 && minTagPointPos.y != -1) {
 					mergeTagImageAndList(x, y - 1, minTag, minTagPointPos, barItemIndex);
 					for (int i = -1; i <= 1; i++) {
-						if (y + i < imgH)
+						if (y + i < subImageSet[barItemIndex]._height)
 							mergeTagImageAndList(x - 1, y + i, minTag, minTagPointPos, barItemIndex);
 					}
 
@@ -316,7 +355,7 @@ void ImageSegmentation::findMinTag(int x, int y, int &minTag, PointPos &minTagPo
 		}
 	}
 	for (int i = -1; i <= 1; i++) {        //左上、左中、左下
-		if (y + i < imgH) {
+		if (y + i < subImageSet[barItemIndex]._height) {
 			if (subImageSet[barItemIndex](x - 1, y + i, 0) == 0 && TagImage(x - 1, y + i, 0) < minTag) {
 				minTag = TagImage(x - 1, y + i, 0);
 				minTagPointPos.x = x - 1;
@@ -410,14 +449,22 @@ CImg<int> ImageSegmentation::getNumberDividedCircledImg() {
 
 	CImg<int> answer = CImg<int>(BinaryImg._width, BinaryImg._height, 1, 3, 0);
 	cimg_forXY(answer, x, y) {
-		answer(x, y, 0) = BinaryImg(x, y, 0);
-		answer(x, y, 1) = BinaryImg(x, y, 0);
-		answer(x, y, 2) = BinaryImg(x, y, 0);
+		answer(x, y, 0) = 255;
+		answer(x, y, 1) = 255;
+		answer(x, y, 2) = 255;
 	}
-
+	
 	for (int i = 0; i < pointPosListSet.size(); i++) {
 		if (pointPosListSet[i].size() != 0) {
-			//先找到数字的包围盒
+			//先绘制数字
+			list<PointPos>::iterator it = pointPosListSet[i].begin();
+			for (; it != pointPosListSet[i].end(); it++) {
+				for (int k = 0; k < 3; k++) {
+					answer((*it).x, (*it).y, k) = 0;
+				}
+			}
+
+			//找到数字的包围盒
 			int xMin, xMax, yMin, yMax;
 			getBoundingOfSingleNum(i, xMin, xMax, yMin, yMax);
 
@@ -461,7 +508,7 @@ void ImageSegmentation::saveSingleNumberImage(const string baseAddress) {
 				}
 				singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
 			}
-			singleNum.display("single Number");
+			//singleNum.display("single Number");
 			char addr[200];
 			string postfix = ".bmp";
 			sprintf(addr, "%s%d%s", baseAddress.c_str(), i, postfix.c_str());
