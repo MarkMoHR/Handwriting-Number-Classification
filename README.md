@@ -67,6 +67,7 @@ An computer vision project, based on cimg library and svm training, to classify 
     
     ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/predict.png)
 
+---
 
 ## 5. Some key points
 ### 5.1 Broken numbers joining
@@ -82,3 +83,9 @@ An computer vision project, based on cimg library and svm training, to classify 
     - _filterB_ means: when at the white pixel, search up/down one pixel and left/right __one__ pixel. If meeting a black pixel, set the current position to black.
     - _filterA_ means: when at the white pixel, search up/down one pixel and left/right __two__ pixel. Count the blacks with the coefficient, -1 or 1 (-1 means subtract one black when meeting a black at left/right side). At last, only if the blacks more than 0, set the current position to black.
     - Obviously, _filterB_ is to thicken the number in all directions, leading to the cons that the holes in number 0, 6, 8, 9 with be filled. So I propose another simple but useful filter, the _filterA_, to deal with such problem. It can be seen that the intensity of a white pixel is much relevant to its horizontal neighbors, which prevent hole filling to some extent. Luckily it works well in my experiments.
+    
+---
+
+## 6. Problems left
+1. Some numbers are connected to each other and are segmented together into one image......
+1. From the predict result above, we see that most of the 7s and 9s are classified into 1......
