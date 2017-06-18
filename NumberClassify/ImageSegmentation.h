@@ -5,6 +5,7 @@
 #include <vector>
 #include <list>
 #include <iostream>
+#include "fstream"
 using namespace std;
 using namespace cimg_library;
 
@@ -32,13 +33,12 @@ public:
 	void processBinaryImage();                    //处理成二值图像
 	CImg<int> getBinaryImage();                   //获取二值图像
 
-	void numberSegmentationMainProcess();         //处理数字字符划分
+	//处理数字字符划分
+	void numberSegmentationMainProcess(const string baseAddress);
 	CImg<int> getHistogramImage();                //获取y方向的直方图
 	CImg<int> getImageWithDividingLine();         //获取带划分线的二值图
 	CImg<int> getColoredNumberDividedImg();       //获取划分成不同颜色的字符图片
 	CImg<int> getNumberDividedCircledImg();       //获取数字用框框分割的图片
-
-	void saveSingleNumberImage(const string baseAddress);
 
 private:
 	//做y方向的直方图，找到行与行之间的分割线
@@ -63,8 +63,12 @@ private:
 	//合并某个点(x,y)所属类别
 	void mergeTagImageAndList(int x, int y, const int minTag, const PointPos minTagPointPos, int barItemIndex);
 
+	//存储图片，并输出一个txt的图像列表
+	void saveSingleNumberImageAndImglist(int barItemIndex);
+
 	//获取单个数字的包围盒
 	void getBoundingOfSingleNum(int listIndex, int& xMin, int& xMax, int& yMin, int& yMax);
+
 
 private:
 	CImg<int> SrcGrayImg, BinaryImg, TagImage, HistogramImage, DividingImg;
@@ -78,6 +82,10 @@ private:
 
 	vector<int> classTagSet;                   //类别tag列表
 	vector<list<PointPos>> pointPosListSet;    //装载类别tag对应的所有点的位置的list的列表
+	vector<list<PointPos>> pointPosListSetForDisplay;
+
+	string basePath;    //单个数字图片生成、预测结果文本存放路径
+	string imglisttxt = "";
 };
 
 

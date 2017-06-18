@@ -40,3 +40,6 @@ ipch/
 
 
 *.bmp
+Output/
+Input/
+TrainedModels/

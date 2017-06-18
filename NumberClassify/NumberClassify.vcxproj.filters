@@ -33,6 +33,12 @@
     <ClInclude Include="ImageSegmentation.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="svm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SVMPredictor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="canny.cpp">
@@ -51,6 +57,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ImageSegmentation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="svm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SVMPredictor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

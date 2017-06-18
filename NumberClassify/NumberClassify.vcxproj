@@ -81,7 +81,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>D:\CodingEnvironment\opencv\opencv\build\x64\vc14\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_world320.lib;opencv_world320d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -116,6 +121,8 @@
     <ClInclude Include="ImageSegmentation.h" />
     <ClInclude Include="PaperModification.h" />
     <ClInclude Include="SimpleImgProcess.h" />
+    <ClInclude Include="svm.h" />
+    <ClInclude Include="SVMPredictor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="canny.cpp" />
@@ -124,6 +131,8 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PaperModification.cpp" />
     <ClCompile Include="SimpleImgProcess.cpp" />
+    <ClCompile Include="svm.cpp" />
+    <ClCompile Include="SVMPredictor.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

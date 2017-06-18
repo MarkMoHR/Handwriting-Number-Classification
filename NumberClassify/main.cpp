@@ -4,6 +4,7 @@
 #include "HoughEdgeDetect.h"
 #include "PaperModification.h"
 #include "ImageSegmentation.h"
+#include "SVMPredictor.h"
 using namespace std;
 
 int main() {
@@ -14,6 +15,8 @@ int main() {
 		Edge_Point_Img, SrcImgWithVertexAndEdge, PaperModifiedImg;
 	/*
 	SrcImg.load_bmp("Input/5.bmp");
+
+	//------------------------- 提取顶点部分 -------------------------//
 
 	GrayImg = grayTheImg(SrcImg);
 	//GrayImg.display("GrayImg");
@@ -34,7 +37,7 @@ int main() {
 	SrcImgWithVertexAndEdge.display("Finally Processed Image");
 
 
-	// 以下为A四纸矫正部分
+	//------------------------- A四纸矫正部分 -------------------------//
 
 	PaperModification myPaperModification(SrcImg);
 	myPaperModification.setVertexSet(myHoughEdgeDetect.getTopFourVertexSet(), myHoughEdgeDetect.getDownSampledSize());
@@ -48,9 +51,11 @@ int main() {
 	//PaperModifiedImg.save("Output/Modification/5-Modification.bmp");
 	*/
 
+	/*
 	//测试模式读取文件
 	PaperModifiedImg.load_bmp("Output/Modification/5-Modification.bmp");
-	// 以下为数字提取识别部分
+
+	//------------------------- 数字提取分割部分 -------------------------//
 
 	CImg<int> NewGraySrcImg, BinaryImg, HistogramImage, DividingImg, 
 		ColoredNumberDividedImg, NumberDividedCircledImg;
@@ -62,25 +67,31 @@ int main() {
 	BinaryImg = myImageSegmentation.getBinaryImage();
 	BinaryImg.display("Binary Img");
 	//BinaryImg.save("Output/BinaryImage/DilationFe/5-BinaryImage-FeFeFa.bmp");
-
 	
-	myImageSegmentation.numberSegmentationMainProcess();
+	myImageSegmentation.numberSegmentationMainProcess("Output/SingleNumberImage/5/");
 	HistogramImage = myImageSegmentation.getHistogramImage();
 	HistogramImage.display("Histogram Image");
-	HistogramImage.save("Output/HistogramImage/5-HistogramImage.bmp");
+	//HistogramImage.save("Output/HistogramImage/5-HistogramImage.bmp");
 	DividingImg = myImageSegmentation.getImageWithDividingLine();
 	DividingImg.display("Image With Dividing Line");
-	DividingImg.save("Output/HistogramImage/5-DividingImg.bmp");
+	//DividingImg.save("Output/HistogramImage/5-DividingImg.bmp");
+
 	ColoredNumberDividedImg = myImageSegmentation.getColoredNumberDividedImg();
 	ColoredNumberDividedImg.display("Colored Number Divided Img");
-	ColoredNumberDividedImg.save("Output/ColoredNumberDividedImg/5-ColoredNumberDividedImg.bmp");
+	//ColoredNumberDividedImg.save("Output/ColoredNumberDividedImg/5-ColoredNumberDividedImg.bmp");
 	NumberDividedCircledImg = myImageSegmentation.getNumberDividedCircledImg();
 	NumberDividedCircledImg.display("Number Divided Circled Img");
-	NumberDividedCircledImg.save("Output/NumberDividedCircledImg/5-NumberDividedCircledImg.bmp");
-
-	myImageSegmentation.saveSingleNumberImage("Output/SingleNumberImage/5/");
+	//NumberDividedCircledImg.save("Output/NumberDividedCircledImg/5-NumberDividedCircledImg.bmp");
+	*/
+	//------------------------- 数字识别预测部分 -------------------------//
 
 	
+	SVMPredictor svmPredictor("Output/SingleNumberImage/5/");
+	svmPredictor.readPredictImagelist("predict_imagelist.txt");
+	svmPredictor.predict_mainProcess("TrainedModels/trainData_scaled_c=4_g=0.015625.model");
+	
 
+	int pause;
+	cin >> pause;
 	return 0;
 }

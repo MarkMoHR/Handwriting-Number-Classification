@@ -2,6 +2,7 @@
 
 #include "ImageSegmentation.h"
 
+
 ImageSegmentation::ImageSegmentation(const CImg<int>& _SrcImg) {
 	SrcGrayImg = CImg<int>(_SrcImg._width, _SrcImg._height, 1, 1, 0);
 	imgW = _SrcImg._width;
@@ -163,7 +164,9 @@ CImg<int> ImageSegmentation::getBinaryImage() {
 	return BinaryImg;
 }
 
-void ImageSegmentation::numberSegmentationMainProcess() {
+void ImageSegmentation::numberSegmentationMainProcess(const string baseAddress) {
+	basePath = baseAddress;
+
 	findDividingLine();
 	divideIntoBarItemImg();
 
@@ -255,10 +258,18 @@ void ImageSegmentation::divideIntoBarItemImg() {
 }
 
 void ImageSegmentation::connectedRegionsTagging() {
+	//对每张子图操作
 	for (int i = 0; i < subImageSet.size(); i++) {
 		doDilationForEachBarItemImg(i);
 		connectedRegionsTaggingOfBarItemImg(i);
+
+		saveSingleNumberImageAndImglist(i);
+		cout << imglisttxt.c_str() << endl;
 	}
+
+	ofstream predictImageListOutput(basePath + "predict_imagelist.txt");
+	predictImageListOutput << imglisttxt.c_str();
+	predictImageListOutput.close();
 }
 
 void ImageSegmentation::doDilationForEachBarItemImg(int barItemIndex) {
@@ -290,6 +301,7 @@ void ImageSegmentation::doDilationForEachBarItemImg(int barItemIndex) {
 
 void ImageSegmentation::connectedRegionsTaggingOfBarItemImg(int barItemIndex) {
 	TagImage = CImg<int>(subImageSet[barItemIndex]._width, subImageSet[barItemIndex]._height, 1, 1, 0);
+	tagAccumulate = -1;
 
 	cimg_forX(subImageSet[barItemIndex], x)
 		cimg_forY(subImageSet[barItemIndex], y) {
@@ -380,6 +392,73 @@ void ImageSegmentation::mergeTagImageAndList(int x, int y, const int minTag, con
 	}
 }
 
+void ImageSegmentation::saveSingleNumberImageAndImglist(int barItemIndex) {
+	for (int i = 0; i < pointPosListSet.size(); i++) {
+		if (pointPosListSet[i].size() != 0) {
+			//先找到数字的包围盒
+			int xMin, xMax, yMin, yMax;
+			getBoundingOfSingleNum(i, xMin, xMax, yMin, yMax);
+
+			int width = xMax - xMin;
+			int height = yMax - yMin;
+
+			//将单个数字填充到新图像：扩充到正方形
+			//int imgSize = (width > height ? width : height) + SingleNumberImgBoundary * 2;
+			//CImg<int> singleNum = CImg<int>(imgSize, imgSize, 1, 1, 0);
+
+			//list<PointPos>::iterator it = pointPosListSet[i].begin();
+			//for (; it != pointPosListSet[i].end(); it++) {
+			//	int x = (*it).x;
+			//	int y = (*it).y;
+			//	int singleNumImgPosX, singleNumImgPosY;
+			//	if (height > width) {
+			//		singleNumImgPosX = (x - xMin) + (imgSize - width) / 2;
+			//		singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
+			//	}
+			//	else {
+			//		singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
+			//		singleNumImgPosY = (y - yMin) + (imgSize - height) / 2;
+			//	}
+			//	singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
+			//}
+
+			//将单个数字填充到新图像：原长宽比
+			int imgSizeH = height + SingleNumberImgBoundary * 2;
+			int imgSizeW = width + SingleNumberImgBoundary * 2;
+			CImg<int> singleNum = CImg<int>(imgSizeW, imgSizeH, 1, 1, 0);
+
+			list<PointPos>::iterator it = pointPosListSet[i].begin();
+			for (; it != pointPosListSet[i].end(); it++) {
+				int x = (*it).x;
+				int y = (*it).y;
+				int singleNumImgPosX, singleNumImgPosY;
+				singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
+				singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
+				singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
+			}
+
+			//singleNum.display("single Number");
+			string postfix = ".bmp";
+			char shortImgName[200];
+			sprintf(shortImgName, "%d_%d%s\n", barItemIndex, classTagSet[i], postfix.c_str());
+			imglisttxt += string(shortImgName);
+
+			char addr[200];
+			sprintf(addr, "%s%d_%d%s", basePath.c_str(), barItemIndex, classTagSet[i], postfix.c_str());
+			singleNum.save(addr);
+		}
+	}
+	imglisttxt += "*\n";
+
+	//把tag集、每一类链表数据集清空
+	classTagSet.clear();
+	for (int i = 0; i < pointPosListSet.size(); i++) {
+		pointPosListSetForDisplay.push_back(pointPosListSet[i]);
+		pointPosListSet[i].clear();
+	}
+	pointPosListSet.clear();
+}
+
 CImg<int> ImageSegmentation::getHistogramImage() {
 	return HistogramImage;
 }
@@ -411,13 +490,13 @@ CImg<int> ImageSegmentation::getColoredNumberDividedImg() {
 	}
 
 	int classTagNum = 0;
-	for (int i = 0; i < pointPosListSet.size(); i++) {
-		if (pointPosListSet[i].size() != 0) {
+	for (int i = 0; i < pointPosListSetForDisplay.size(); i++) {
+		if (pointPosListSetForDisplay[i].size() != 0) {
 			classTagNum++;
 
 			int colorIndex = i % ColorSet.size();
-			list<PointPos>::iterator it = pointPosListSet[i].begin();
-			for (; it != pointPosListSet[i].end(); it++) {
+			list<PointPos>::iterator it = pointPosListSetForDisplay[i].begin();
+			for (; it != pointPosListSetForDisplay[i].end(); it++) {
 				for (int k = 0; k < 3; k++) {
 					answer((*it).x, (*it).y, k) = ColorSet[colorIndex][k];
 				}
@@ -433,14 +512,27 @@ void ImageSegmentation::getBoundingOfSingleNum(int listIndex, int& xMin, int& xM
 	xMin = yMin = Infinite;
 	xMax = yMax = -1;
 
-	list<PointPos>::iterator it = pointPosListSet[listIndex].begin();
-	for (; it != pointPosListSet[listIndex].end(); it++) {
-		int x = (*it).x;
-		int y = (*it).y;
-		xMin = x < xMin ? x : xMin;
-		yMin = y < yMin ? y : yMin;
-		xMax = x > xMax ? x : xMax;
-		yMax = y > yMax ? y : yMax;
+	if (!pointPosListSet.empty()) {
+		list<PointPos>::iterator it = pointPosListSet[listIndex].begin();
+		for (; it != pointPosListSet[listIndex].end(); it++) {
+			int x = (*it).x;
+			int y = (*it).y;
+			xMin = x < xMin ? x : xMin;
+			yMin = y < yMin ? y : yMin;
+			xMax = x > xMax ? x : xMax;
+			yMax = y > yMax ? y : yMax;
+		}
+	}
+	else {
+		list<PointPos>::iterator it = pointPosListSetForDisplay[listIndex].begin();
+		for (; it != pointPosListSetForDisplay[listIndex].end(); it++) {
+			int x = (*it).x;
+			int y = (*it).y;
+			xMin = x < xMin ? x : xMin;
+			yMin = y < yMin ? y : yMin;
+			xMax = x > xMax ? x : xMax;
+			yMax = y > yMax ? y : yMax;
+		}
 	}
 }
 
@@ -454,11 +546,11 @@ CImg<int> ImageSegmentation::getNumberDividedCircledImg() {
 		answer(x, y, 2) = 255;
 	}
 	
-	for (int i = 0; i < pointPosListSet.size(); i++) {
-		if (pointPosListSet[i].size() != 0) {
+	for (int i = 0; i < pointPosListSetForDisplay.size(); i++) {
+		if (pointPosListSetForDisplay[i].size() != 0) {
 			//先绘制数字
-			list<PointPos>::iterator it = pointPosListSet[i].begin();
-			for (; it != pointPosListSet[i].end(); it++) {
+			list<PointPos>::iterator it = pointPosListSetForDisplay[i].begin();
+			for (; it != pointPosListSetForDisplay[i].end(); it++) {
 				for (int k = 0; k < 3; k++) {
 					answer((*it).x, (*it).y, k) = 0;
 				}
@@ -477,42 +569,4 @@ CImg<int> ImageSegmentation::getNumberDividedCircledImg() {
 	}
 
 	return answer;
-}
-
-void ImageSegmentation::saveSingleNumberImage(const string baseAddress) {
-	for (int i = 0; i < pointPosListSet.size(); i++) {
-		if (pointPosListSet[i].size() != 0) {
-			//先找到数字的包围盒
-			int xMin, xMax, yMin, yMax;
-			getBoundingOfSingleNum(i, xMin, xMax, yMin, yMax);
-
-			int width = xMax - xMin;
-			int height = yMax - yMin;
-
-			//将单个数字填充到新图像
-			int imgSize = (width > height ? width : height) + SingleNumberImgBoundary * 2;
-			CImg<int> singleNum = CImg<int>(imgSize, imgSize, 1, 1, 0);
-
-			list<PointPos>::iterator it = pointPosListSet[i].begin();
-			for (; it != pointPosListSet[i].end(); it++) {
-				int x = (*it).x;
-				int y = (*it).y;
-				int singleNumImgPosX, singleNumImgPosY;
-				if (height > width) {
-					singleNumImgPosX = (x - xMin) + (imgSize - width) / 2;
-					singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
-				}
-				else {
-					singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
-					singleNumImgPosY = (y - yMin) + (imgSize - height) / 2;
-				}
-				singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
-			}
-			//singleNum.display("single Number");
-			char addr[200];
-			string postfix = ".bmp";
-			sprintf(addr, "%s%d%s", baseAddress.c_str(), i, postfix.c_str());
-			singleNum.save(addr);
-		}
-	}
 }
