@@ -30,7 +30,7 @@ An computer vision project, based on cimg library and svm training, to classify 
 1. Modify the paper into a standard A4 paper
 1. Segmentation of the numbers in order:
     - Convert into binary image
-    - Divide the source image into sub-image (each sub-image contains a line of numbers)
+    - Use vertical histogram to divide the source image into sub-image (each sub-image contains a line of numbers)
     - Foreach sub-image, implement dilation to thicken the number (and join the broken ones)
     - Foreach sub-image, use connected-component_labeling algorithm to divide the single number: 
     https://en.wikipedia.org/wiki/Connected-component_labeling
@@ -60,7 +60,25 @@ An computer vision project, based on cimg library and svm training, to classify 
     - Binary image with dilation & Divided Image & Circled single number
     
     ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/2.png)
-    - Divided into single numbers in order
+    - Divided into single numbers in order as well as an image list in .txt
     
-    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/singleNumbers.png)
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/imageList.png)
+    - Prediction:
+    
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/predict.png)
 
+
+## 5. Some key points
+### 5.1 Broken numbers joining
+- Comparison (Before joining & After joining)
+    
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/joinTheBrokens.png)
+    
+- Implements : use the filters below when doing the __dilation__ during the number segmentation
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/filter1.png) (filterA) 
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/filter2.png) (filterB)
+
+    - Do the dilation with filterA __twice__ at first, and then filterB __once__.
+    - _filterB_ means: when at the white pixel, search up/down one pixel and left/right __one__ pixel. If meeting a black pixel, set the current position to black.
+    - _filterA_ means: when at the white pixel, search up/down one pixel and left/right __two__ pixel. Count the blacks with the coefficient, -1 or 1 (-1 means subtract one black when meeting a black at left/right side). At last, only if the blacks more than 0, set the current position to black.
+    - Obviously, _filterB_ is to thicken the number in all directions, leading to the cons that the holes in number 0, 6, 8, 9 with be filled. So I propose another simple but useful filter, the _filterA_, to deal with such problem. It can be seen that the intensity of a white pixel is much relevant to its horizontal neighbors, which prevent hole filling to some extent. Luckily it works well in my experiments.
