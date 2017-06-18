@@ -129,6 +129,7 @@
     <ClCompile Include="HoughEdgeDetect.cpp" />
     <ClCompile Include="ImageSegmentation.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MnistToJPG.cpp" />
     <ClCompile Include="PaperModification.cpp" />
     <ClCompile Include="SimpleImgProcess.cpp" />
     <ClCompile Include="svm.cpp" />
