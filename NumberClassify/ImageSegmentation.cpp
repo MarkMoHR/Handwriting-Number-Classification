@@ -247,8 +247,10 @@ void ImageSegmentation::divideIntoBarItemImg() {
 			//barItemImg.display("barItemImg");
 
 			if (i > 1) {
-				HistogramImage.draw_line(0, divideLinePointSet[i - 1], HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
-				DividingImg.draw_line(0, divideLinePointSet[i - 1], HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
+				HistogramImage.draw_line(0, divideLinePointSet[i - 1], 
+					HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
+				DividingImg.draw_line(0, divideLinePointSet[i - 1], 
+					HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
 			}
 		}
 	}

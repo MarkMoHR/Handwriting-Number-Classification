@@ -14,7 +14,7 @@ int main() {
 	CImg<int> SrcImg, GrayImg, DownSampledImg, CannyImg, HoughSpaceImg, 
 		Edge_Point_Img, SrcImgWithVertexAndEdge, PaperModifiedImg;
 	/*
-	SrcImg.load_bmp("Input/5.bmp");
+	SrcImg.load_bmp("Input/3.bmp");
 
 	//------------------------- 提取顶点部分 -------------------------//
 
@@ -48,12 +48,12 @@ int main() {
 	cout << endl << endl << "==== PaperModification End: " << end - start << " seconds is used." << endl << endl;
 
 	PaperModifiedImg.display("Paper Modified Image");
-	//PaperModifiedImg.save("Output/Modification/5-Modification.bmp");
+	//PaperModifiedImg.save("Output/Modification/3-Modification.bmp");
 	*/
 
-	/*
+	
 	//测试模式读取文件
-	PaperModifiedImg.load_bmp("Output/Modification/5-Modification.bmp");
+	PaperModifiedImg.load_bmp("Output/Modification/3-Modification.bmp");
 
 	//------------------------- 数字提取分割部分 -------------------------//
 
@@ -66,27 +66,27 @@ int main() {
 	myImageSegmentation.processBinaryImage();
 	BinaryImg = myImageSegmentation.getBinaryImage();
 	BinaryImg.display("Binary Img");
-	//BinaryImg.save("Output/BinaryImage/DilationFe/5-BinaryImage-FeFeFa.bmp");
+	//BinaryImg.save("Output/BinaryImage/DilationFe/3-BinaryImage-FeFeFa.bmp");
 	
-	myImageSegmentation.numberSegmentationMainProcess("Output/SingleNumberImage/5/");
+	myImageSegmentation.numberSegmentationMainProcess("Output/SingleNumberImage/3/");
 	HistogramImage = myImageSegmentation.getHistogramImage();
 	HistogramImage.display("Histogram Image");
-	//HistogramImage.save("Output/HistogramImage/5-HistogramImage.bmp");
+	//HistogramImage.save("Output/HistogramImage/3-HistogramImage.bmp");
 	DividingImg = myImageSegmentation.getImageWithDividingLine();
 	DividingImg.display("Image With Dividing Line");
-	//DividingImg.save("Output/HistogramImage/5-DividingImg.bmp");
+	//DividingImg.save("Output/HistogramImage/3-DividingImg.bmp");
 
 	ColoredNumberDividedImg = myImageSegmentation.getColoredNumberDividedImg();
 	ColoredNumberDividedImg.display("Colored Number Divided Img");
-	//ColoredNumberDividedImg.save("Output/ColoredNumberDividedImg/5-ColoredNumberDividedImg.bmp");
+	//ColoredNumberDividedImg.save("Output/ColoredNumberDividedImg/3-ColoredNumberDividedImg.bmp");
 	NumberDividedCircledImg = myImageSegmentation.getNumberDividedCircledImg();
 	NumberDividedCircledImg.display("Number Divided Circled Img");
-	//NumberDividedCircledImg.save("Output/NumberDividedCircledImg/5-NumberDividedCircledImg.bmp");
-	*/
+	//NumberDividedCircledImg.save("Output/NumberDividedCircledImg/3-NumberDividedCircledImg.bmp");
+	
 	//------------------------- 数字识别预测部分 -------------------------//
 
 	
-	SVMPredictor svmPredictor("Output/SingleNumberImage/5/");
+	SVMPredictor svmPredictor("Output/SingleNumberImage/3/");
 	svmPredictor.readPredictImagelist("predict_imagelist.txt");
 	svmPredictor.predict_mainProcess("TrainedModels/trainData_scaled_c=4_g=0.015625.model");
 	
