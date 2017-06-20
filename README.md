@@ -86,6 +86,14 @@ An computer vision project, based on cimg library and svm training, to classify 
     
 ---
 
-## 6. Problems left
+## 6. Code and Algorithm Explanation
+1. Segmentation of the numbers & Broken numbers joining : 
+    
+    http://blog.csdn.net/qq_33000225/article/details/73123880  (Chinese version)
+1. Prediction: (Waiting......)
+
+---
+
+## 7. Problems left
 1. Some numbers are connected to each other and are segmented together into one image......
 1. From the predict result above, we see that most of the 7s and 9s are classified into 1......
