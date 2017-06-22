@@ -394,6 +394,25 @@ void ImageSegmentation::mergeTagImageAndList(int x, int y, const int minTag, con
 	}
 }
 
+
+CImg<int> do_Y_Erosion(CImg<int>& Img) {
+	CImg<int> result = CImg<int>(Img._width, Img._height, 1, 1, 0);
+	cimg_forXY(Img, x, y) {
+		result(x, y, 0) = Img(x, y, 0);
+		if (Img(x, y, 0) == 255) {
+			if (y - 1 >= 0) {
+				if (Img(x, y - 1, 0) == 0)
+					result(x, y, 0) = 0;
+			}
+
+			if (y + 1 < Img._height) {
+				if (Img(x, y + 1, 0) == 0)
+					result(x, y, 0) = 0;
+			}
+		}
+	}
+	return result;
+}
 void ImageSegmentation::saveSingleNumberImageAndImglist(int barItemIndex) {
 	for (int i = 0; i < pointPosListSet.size(); i++) {
 		if (pointPosListSet[i].size() != 0) {
@@ -405,39 +424,42 @@ void ImageSegmentation::saveSingleNumberImageAndImglist(int barItemIndex) {
 			int height = yMax - yMin;
 
 			//将单个数字填充到新图像：扩充到正方形
-			//int imgSize = (width > height ? width : height) + SingleNumberImgBoundary * 2;
-			//CImg<int> singleNum = CImg<int>(imgSize, imgSize, 1, 1, 0);
-
-			//list<PointPos>::iterator it = pointPosListSet[i].begin();
-			//for (; it != pointPosListSet[i].end(); it++) {
-			//	int x = (*it).x;
-			//	int y = (*it).y;
-			//	int singleNumImgPosX, singleNumImgPosY;
-			//	if (height > width) {
-			//		singleNumImgPosX = (x - xMin) + (imgSize - width) / 2;
-			//		singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
-			//	}
-			//	else {
-			//		singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
-			//		singleNumImgPosY = (y - yMin) + (imgSize - height) / 2;
-			//	}
-			//	singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
-			//}
-
-			//将单个数字填充到新图像：原长宽比
-			int imgSizeH = height + SingleNumberImgBoundary * 2;
-			int imgSizeW = width + SingleNumberImgBoundary * 2;
-			CImg<int> singleNum = CImg<int>(imgSizeW, imgSizeH, 1, 1, 0);
+			int imgSize = (width > height ? width : height) + SingleNumberImgBoundary * 2;
+			CImg<int> singleNum = CImg<int>(imgSize, imgSize, 1, 1, 0);
 
 			list<PointPos>::iterator it = pointPosListSet[i].begin();
 			for (; it != pointPosListSet[i].end(); it++) {
 				int x = (*it).x;
 				int y = (*it).y;
 				int singleNumImgPosX, singleNumImgPosY;
-				singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
-				singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
+				if (height > width) {
+					singleNumImgPosX = (x - xMin) + (imgSize - width) / 2;
+					singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
+				}
+				else {
+					singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
+					singleNumImgPosY = (y - yMin) + (imgSize - height) / 2;
+				}
 				singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
 			}
+
+			//将单个数字填充到新图像：原长宽比
+			//int imgSizeH = height + SingleNumberImgBoundary * 2;
+			//int imgSizeW = width + SingleNumberImgBoundary * 2;
+			//CImg<int> singleNum = CImg<int>(imgSizeW, imgSizeH, 1, 1, 0);
+			//list<PointPos>::iterator it = pointPosListSet[i].begin();
+			//for (; it != pointPosListSet[i].end(); it++) {
+			//	int x = (*it).x;
+			//	int y = (*it).y;
+			//	int singleNumImgPosX, singleNumImgPosY;
+			//	singleNumImgPosX = (x - xMin) + SingleNumberImgBoundary;
+			//	singleNumImgPosY = (y - yMin) + SingleNumberImgBoundary;
+			//	singleNum(singleNumImgPosX, singleNumImgPosY, 0) = 255;
+			//}
+
+
+			//对单个数字图像做Y方向腐蚀操作
+			singleNum = do_Y_Erosion(singleNum);
 
 			//singleNum.display("single Number");
 			string postfix = ".bmp";
