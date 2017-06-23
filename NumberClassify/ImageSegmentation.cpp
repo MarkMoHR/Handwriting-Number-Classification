@@ -414,8 +414,21 @@ CImg<int> do_Y_Erosion(CImg<int>& Img) {
 	return result;
 }
 void ImageSegmentation::saveSingleNumberImageAndImglist(int barItemIndex) {
+	//先统计每张数字图像黑色像素个数平均值
+	int totalBlacks = 0, numberCount = 0;
 	for (int i = 0; i < pointPosListSet.size(); i++) {
 		if (pointPosListSet[i].size() != 0) {
+			//cout << "pointPosListSet[i].size() " << pointPosListSet[i].size() << endl;
+			totalBlacks += pointPosListSet[i].size();
+			numberCount++;
+		}
+	}
+	int avgBlacks = totalBlacks / numberCount;
+	//cout << endl << "avgBlacks " << avgBlacks << endl << endl;
+
+	for (int i = 0; i < pointPosListSet.size(); i++) {
+		//只有黑色像素个数大于 平均值的一定比例，才可视为数字图像（去除断点）
+		if (pointPosListSet[i].size() != 0 && pointPosListSet[i].size() > avgBlacks * NumberImageBlackPixelPercentage) {
 			//先找到数字的包围盒
 			int xMin, xMax, yMin, yMax;
 			getBoundingOfSingleNum(i, xMin, xMax, yMin, yMax);
@@ -470,6 +483,8 @@ void ImageSegmentation::saveSingleNumberImageAndImglist(int barItemIndex) {
 			char addr[200];
 			sprintf(addr, "%s%d_%d%s", basePath.c_str(), barItemIndex, classTagSet[i], postfix.c_str());
 			singleNum.save(addr);
+
+			pointPosListSetForDisplay.push_back(pointPosListSet[i]);
 		}
 	}
 	imglisttxt += "*\n";
@@ -477,7 +492,6 @@ void ImageSegmentation::saveSingleNumberImageAndImglist(int barItemIndex) {
 	//把tag集、每一类链表数据集清空
 	classTagSet.clear();
 	for (int i = 0; i < pointPosListSet.size(); i++) {
-		pointPosListSetForDisplay.push_back(pointPosListSet[i]);
 		pointPosListSet[i].clear();
 	}
 	pointPosListSet.clear();

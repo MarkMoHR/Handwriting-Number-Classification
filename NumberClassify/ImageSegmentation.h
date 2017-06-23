@@ -9,14 +9,16 @@
 using namespace std;
 using namespace cimg_library;
 
-#define BinaryGap 135
-#define BoundaryRemoveGap 7
-#define Infinite 249480
+#define BinaryGap 135            //图像二值化全局阈值
+#define BoundaryRemoveGap 7      //边缘全设为白色的距离
+#define Infinite 249480          //视作无穷大
 
-#define SingleNumberImgBoundary 5
-#define HistogramValleyMaxPixelNumber 0
+#define SingleNumberImgBoundary 5                //单张数字图像边缘填充宽度
+#define HistogramValleyMaxPixelNumber 0          //求直方图，谷的最多像素个数
 
-#define SubImgBlackPixelPercentage 0.001
+#define SubImgBlackPixelPercentage 0.001         //一张子图内黑色像素超过一定百分比才算有数字
+#define NumberImageBlackPixelPercentage 0.35     //单张图像黑色像素个数超过所有图像
+												 //黑色像素个数均值的一定比例才算作有数字
 
 struct PointPos {
 	int x;
