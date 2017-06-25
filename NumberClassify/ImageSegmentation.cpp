@@ -367,15 +367,15 @@ vector<int> getDivideLineXofSubImage(const CImg<int>& subImg) {
 
 //分割行子图，得到列子图
 //@_dividePosXset 以-1起，以lineImg._width结束
-vector<CImg<int>> getRolItemImgSet(const CImg<int>& lineImg, vector<int> _dividePosXset) {
+vector<CImg<int>> getRowItemImgSet(const CImg<int>& lineImg, vector<int> _dividePosXset) {
 	vector<CImg<int>> result;
 	for (int i = 1; i < _dividePosXset.size(); i++) {
-		int rolItemWidth = _dividePosXset[i] - _dividePosXset[i - 1];
-		CImg<int> rolItemImg = CImg<int>(rolItemWidth, lineImg._height, 1, 1, 0);
-		cimg_forXY(rolItemImg, x, y) {
-			rolItemImg(x, y, 0) = lineImg(x + _dividePosXset[i - 1] + 1, y, 0);
+		int rowItemWidth = _dividePosXset[i] - _dividePosXset[i - 1];
+		CImg<int> rowItemImg = CImg<int>(rowItemWidth, lineImg._height, 1, 1, 0);
+		cimg_forXY(rowItemImg, x, y) {
+			rowItemImg(x, y, 0) = lineImg(x + _dividePosXset[i - 1] + 1, y, 0);
 		}
-		result.push_back(rolItemImg);
+		result.push_back(rowItemImg);
 	}
 
 	return result;
@@ -401,10 +401,10 @@ void ImageSegmentation::divideIntoBarItemImg() {
 		//只有当黑色像素个数超过图像大小一定比例时，才可视作有数字
 		if (blackPercent > SubImgBlackPixelPercentage) {
 			vector<int> dividePosXset = getDivideLineXofSubImage(barItemImg);
-			vector<CImg<int>> rolItemImgSet = getRolItemImgSet(barItemImg, dividePosXset);
+			vector<CImg<int>> rowItemImgSet = getRowItemImgSet(barItemImg, dividePosXset);
 
-			for (int j = 0; j < rolItemImgSet.size(); j++) {
-				subImageSet.push_back(rolItemImgSet[j]);
+			for (int j = 0; j < rowItemImgSet.size(); j++) {
+				subImageSet.push_back(rowItemImgSet[j]);
 				newDivideLinePointSet.push_back(PointPos(dividePosXset[j], divideLinePointSet[i - 1].y));
 			}
 
