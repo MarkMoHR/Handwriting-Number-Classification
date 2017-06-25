@@ -2,6 +2,7 @@
 
 #include "ImageSegmentation.h"
 
+int lineColor[3]{ 255, 0, 0 };
 
 ImageSegmentation::ImageSegmentation(const CImg<int>& _SrcImg) {
 	SrcGrayImg = CImg<int>(_SrcImg._width, _SrcImg._height, 1, 1, 0);
@@ -170,6 +171,10 @@ void ImageSegmentation::numberSegmentationMainProcess(const string baseAddress) 
 	findDividingLine();
 	divideIntoBarItemImg();
 
+	//for (int i = 0; i < subImageSet.size(); i++) {
+	//	subImageSet[i].display("subImageSet");
+	//}
+
 	connectedRegionsTagging();
 }
 
@@ -214,46 +219,209 @@ void ImageSegmentation::findDividingLine() {
 		}
 	}
 
-	divideLinePointSet.push_back(-1);
+	divideLinePointSet.push_back(PointPos(0, -1));
 	//两拐点中间做分割
 	if (inflectionPointSet.size() > 2) {
 		for (int i = 1; i < inflectionPointSet.size() - 1; i = i + 2) {
-			int divideLinePoint = (inflectionPointSet[i] + inflectionPointSet[i + 1]) / 2;
-			divideLinePointSet.push_back(divideLinePoint);
+			int divideLinePointY = (inflectionPointSet[i] + inflectionPointSet[i + 1]) / 2;
+			divideLinePointSet.push_back(PointPos(0, divideLinePointY));
 		}
 	}
-	divideLinePointSet.push_back(BinaryImg._height - 1);
+	divideLinePointSet.push_back(PointPos(0, BinaryImg._height - 1));
 }
 
+//获取一行行的子图的水平分割线
+vector<int> getDivideLineXofSubImage(const CImg<int>& subImg) {
+	vector<int> InflectionPosXs;
+
+	//先绘制X方向灰度直方图
+	CImg<int> XHistogramImage = CImg<int>(subImg._width, subImg._height, 1, 3, 0);
+	cimg_forX(subImg, x) {
+		int blackPixel = 0;
+		cimg_forY(subImg, y) {
+			XHistogramImage(x, y, 0) = 255;
+			XHistogramImage(x, y, 1) = 255;
+			XHistogramImage(x, y, 2) = 255;
+			if (subImg(x, y, 0) == 0)
+				blackPixel++;
+		}
+		cimg_forY(subImg, y) {
+			if (y < blackPixel) {
+				XHistogramImage(x, y, 0) = 0;
+				XHistogramImage(x, y, 1) = 0;
+				XHistogramImage(x, y, 2) = 0;
+			}
+		}
+	}
+
+	//查找拐点
+	cimg_forX(XHistogramImage, x) {
+		if (x >= 1) {
+			bool leftSideOK = false;
+			bool rightSideOK = false;
+
+			//白转黑
+			if (XHistogramImage(x, 0, 0) == 0 && XHistogramImage(x - 1, 0, 0) == 255) {
+				leftSideOK = true;
+				rightSideOK = true;
+
+				for (int i = 1; i <= XHistogramScanningPixelNumber; i++) {    //向左扫描
+					int scanPosX = x - i;
+					if (scanPosX >= 0) {
+						if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，即不符合
+							leftSideOK = false;
+							break;
+						}
+					}
+					else
+						break;
+				}
+
+				//当左边符合条件，看右边
+				if (leftSideOK) {
+					int blackPixelNum = 0;
+					int rscan;
+					for (rscan = 1; rscan <= XHistogramScanningPixelNumber; rscan++) {    //向右扫描
+						int scanPosX = x + rscan;
+						if (scanPosX < XHistogramImage._width) {
+							if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，累加
+								blackPixelNum++;
+							}
+						}
+						else
+							break;
+					}
+					double rrate = (double)blackPixelNum / (double)rscan;
+					cout << "black " << blackPixelNum << " rscan " << rscan << " rate " << rrate << endl;
+					//当右边有一定数量的黑色像素时，才视为拐点；否则可能出现‘万白丛中一点黑’的情况
+					if (blackPixelNum < rscan * XHistogramScanningPercentage) {
+						rightSideOK = false;
+					}
+
+				}
+			}
+			//黑转白
+			else if (XHistogramImage(x, 0, 0) == 255 && XHistogramImage(x - 1, 0, 0) == 0) {
+				leftSideOK = true;
+				rightSideOK = true;
+
+				for (int i = 1; i <= XHistogramScanningPixelNumber; i++) {    //向右扫描
+					int scanPosX = x + i;
+					if (scanPosX < XHistogramImage._width) {
+						if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，即不符合
+							rightSideOK = false;
+							break;
+						}
+					}
+					else
+						break;
+				}
+
+				//当右边符合条件，看左边
+				if (rightSideOK) {
+					int blackPixelNum = 0;
+					int lscan;
+					for (lscan = 1; lscan <= XHistogramScanningPixelNumber; lscan++) {    //向左扫描
+						int scanPosX = x - lscan;
+						if (scanPosX >= 0) {
+							if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，累加
+								blackPixelNum++;
+							}
+						}
+						else
+							break;
+					}
+
+					double lrate = (double)blackPixelNum / (double)lscan;
+					cout << "black " << blackPixelNum << " lscan " << lscan << " rate " << lrate << endl;
+					if (blackPixelNum < lscan * XHistogramScanningPercentage) {
+						leftSideOK = false;
+					}
+				}
+			}
+		
+			//两边检验都通过，视为拐点
+			if (leftSideOK && rightSideOK) {
+				InflectionPosXs.push_back(x);
+			}
+		}
+	}
+
+	for (int i = 0; i < InflectionPosXs.size(); i++)
+		XHistogramImage.draw_line(InflectionPosXs[i], 0, InflectionPosXs[i], XHistogramImage._height - 1, lineColor);
+	//XHistogramImage.display("XHistogramImage");
+
+	//两拐点中间做分割
+	vector<int> dividePosXs;
+	dividePosXs.push_back(-1);
+	if (InflectionPosXs.size() > 2) {
+		for (int i = 1; i < InflectionPosXs.size() - 1; i = i + 2) {
+			int divideLinePointX = (InflectionPosXs[i] + InflectionPosXs[i + 1]) / 2;
+			dividePosXs.push_back(divideLinePointX);
+		}
+	}
+	dividePosXs.push_back(XHistogramImage._width - 1);
+
+	return dividePosXs;
+}
+
+//分割行子图，得到列子图
+//@_dividePosXset 以-1起，以lineImg._width结束
+vector<CImg<int>> getRolItemImgSet(const CImg<int>& lineImg, vector<int> _dividePosXset) {
+	vector<CImg<int>> result;
+	for (int i = 1; i < _dividePosXset.size(); i++) {
+		int rolItemWidth = _dividePosXset[i] - _dividePosXset[i - 1];
+		CImg<int> rolItemImg = CImg<int>(rolItemWidth, lineImg._height, 1, 1, 0);
+		cimg_forXY(rolItemImg, x, y) {
+			rolItemImg(x, y, 0) = lineImg(x + _dividePosXset[i - 1] + 1, y, 0);
+		}
+		result.push_back(rolItemImg);
+	}
+
+	return result;
+}
+
+
 void ImageSegmentation::divideIntoBarItemImg() {
-	vector<int> newDivideLinePointSet;
-	int lineColor[3]{ 255, 0, 0 };
+	vector<PointPos> newDivideLinePointSet;
 
 	for (int i = 1; i < divideLinePointSet.size(); i++) {
-		int barHright = divideLinePointSet[i] - divideLinePointSet[i - 1];
+		int barHeight = divideLinePointSet[i].y - divideLinePointSet[i - 1].y;
 		int blackPixel = 0;
-		CImg<int> barItemImg = CImg<int>(BinaryImg._width, barHright, 1, 1, 0);
+		CImg<int> barItemImg = CImg<int>(BinaryImg._width, barHeight, 1, 1, 0);
 		cimg_forXY(barItemImg, x, y) {
-			barItemImg(x, y, 0) = BinaryImg(x, divideLinePointSet[i - 1] + 1 + y, 0);
+			barItemImg(x, y, 0) = BinaryImg(x, divideLinePointSet[i - 1].y + 1 + y, 0);
 			if (barItemImg(x, y, 0) == 0)
 				blackPixel++;
 		}
 
-		double blackPercent = (double)blackPixel / (double)(BinaryImg._width * barHright);
+		double blackPercent = (double)blackPixel / (double)(BinaryImg._width * barHeight);
 		cout << "blackPercent " << blackPercent << endl;
+
+		//只有当黑色像素个数超过图像大小一定比例时，才可视作有数字
 		if (blackPercent > SubImgBlackPixelPercentage) {
-			subImageSet.push_back(barItemImg);
-			newDivideLinePointSet.push_back(divideLinePointSet[i - 1]);
-			//barItemImg.display("barItemImg");
+			vector<int> dividePosXset = getDivideLineXofSubImage(barItemImg);
+			vector<CImg<int>> rolItemImgSet = getRolItemImgSet(barItemImg, dividePosXset);
+
+			for (int j = 0; j < rolItemImgSet.size(); j++) {
+				subImageSet.push_back(rolItemImgSet[j]);
+				newDivideLinePointSet.push_back(PointPos(dividePosXset[j], divideLinePointSet[i - 1].y));
+			}
 
 			if (i > 1) {
-				HistogramImage.draw_line(0, divideLinePointSet[i - 1], 
-					HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
-				DividingImg.draw_line(0, divideLinePointSet[i - 1], 
-					HistogramImage._width - 1, divideLinePointSet[i - 1], lineColor);
+				HistogramImage.draw_line(0, divideLinePointSet[i - 1].y,
+					HistogramImage._width - 1, divideLinePointSet[i - 1].y, lineColor);
+				DividingImg.draw_line(0, divideLinePointSet[i - 1].y,
+					HistogramImage._width - 1, divideLinePointSet[i - 1].y, lineColor);
+			}
+			//绘制竖线
+			for (int j = 1; j < dividePosXset.size() - 1; j++) {
+				DividingImg.draw_line(dividePosXset[j], divideLinePointSet[i - 1].y,
+					dividePosXset[j], divideLinePointSet[i].y, lineColor);
 			}
 		}
 	}
+
 	divideLinePointSet.clear();
 	for (int i = 0; i < newDivideLinePointSet.size(); i++)
 		divideLinePointSet.push_back(newDivideLinePointSet[i]);
@@ -336,7 +504,7 @@ void ImageSegmentation::connectedRegionsTaggingOfBarItemImg(int barItemIndex) {
 
 					//当前位置
 					TagImage(x, y, 0) = minTag;
-					PointPos cPoint(x, y + divideLinePointSet[barItemIndex] + 1);
+					PointPos cPoint(x + divideLinePointSet[barItemIndex].x + 1, y + divideLinePointSet[barItemIndex].y + 1);
 					pointPosListSet[minTag].push_back(cPoint);
 
 				}
@@ -355,7 +523,7 @@ void ImageSegmentation::addNewClass(int x, int y, int barItemIndex) {
 	TagImage(x, y, 0) = tagAccumulate;
 	classTagSet.push_back(tagAccumulate);
 	list<PointPos> pList;
-	PointPos cPoint(x, y + divideLinePointSet[barItemIndex] + 1);
+	PointPos cPoint(x + divideLinePointSet[barItemIndex].x + 1, y + divideLinePointSet[barItemIndex].y + 1);
 	pList.push_back(cPoint);
 	pointPosListSet.push_back(pList);
 }
@@ -387,7 +555,7 @@ void ImageSegmentation::mergeTagImageAndList(int x, int y, const int minTag, con
 			//把所有同一类的tag替换为最小tag、把list接到最小tag的list
 			list<PointPos>::iterator it = pointPosListSet[tagBefore].begin();
 			for (; it != pointPosListSet[tagBefore].end(); it++) {
-				TagImage((*it).x, (*it).y - divideLinePointSet[barItemIndex] - 1, 0) = minTag;
+				TagImage((*it).x - divideLinePointSet[barItemIndex].x - 1, (*it).y - divideLinePointSet[barItemIndex].y - 1, 0) = minTag;
 			}
 			pointPosListSet[minTag].splice(pointPosListSet[minTag].end(), pointPosListSet[tagBefore]);
 		}

@@ -15,6 +15,8 @@ using namespace cimg_library;
 
 #define SingleNumberImgBoundary 5                //单张数字图像边缘填充宽度
 #define HistogramValleyMaxPixelNumber 0          //求直方图，谷的最多像素个数
+#define XHistogramScanningPixelNumber 100         //做X方向直方图，遇到白转黑/黑转白时，向左/右搜索的距离
+#define XHistogramScanningPercentage 0.4
 
 #define SubImgBlackPixelPercentage 0.001         //一张子图内黑色像素超过一定百分比才算有数字
 #define NumberImageBlackPixelPercentage 0.35     //单张图像黑色像素个数超过所有图像
@@ -78,7 +80,7 @@ private:
 	int imgW, imgH;
 
 	vector<int> inflectionPointSet;    //拐点
-	vector<int> divideLinePointSet;    //直方图峰值划分线点集
+	vector<PointPos> divideLinePointSet;    //直方图峰值划分线点集
 
 	int tagAccumulate = -1;            //类别tag累加值
 
