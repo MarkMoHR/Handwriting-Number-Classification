@@ -31,6 +31,7 @@ An computer vision project, based on cimg library and svm training, to classify 
 1. Segmentation of the numbers in order:
     - Convert into binary image
     - Use vertical histogram to divide the source image into sub-image (each sub-image contains a line of numbers)
+    - Use horizontal histogram to divide the line-sub-image into several row-sub-images
     - Foreach sub-image, implement dilation to thicken the number (and join the broken ones)
     - Foreach sub-image, use connected-component_labeling algorithm to divide the single number: 
     https://en.wikipedia.org/wiki/Connected-component_labeling
@@ -60,6 +61,7 @@ An computer vision project, based on cimg library and svm training, to classify 
     - Binary image with dilation & Divided Image & Circled single number
     
     ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/2.png)
+    ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/4-DividingImg.png)
     - Divided into single numbers in order as well as an image list in .txt
     
     ![Image text](https://github.com/MarkMoHR/HandwritingNumberClassification/raw/master/ResultScreenshots/imageList.png)
