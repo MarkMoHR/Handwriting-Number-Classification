@@ -92,7 +92,7 @@ int main() {
 	
 	myImageSegmentation.numberSegmentationMainProcess("Output/SingleNumberImage/7");
 	HistogramImage = myImageSegmentation.getHistogramImage();
-	HistogramImage.display("Histogram Image");
+	//HistogramImage.display("Histogram Image");
 	//HistogramImage.save("Output/HistoDividedImage/7-HistogramImage.bmp");
 	DividingImg = myImageSegmentation.getImageWithDividingLine();
 	DividingImg.display("Image With Dividing Line");

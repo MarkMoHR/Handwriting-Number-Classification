@@ -15,9 +15,8 @@ using namespace cimg_library;
 
 #define SingleNumberImgBoundary 5                //单张数字图像边缘填充宽度
 #define YHistogramValleyMaxPixelNumber 0         //求Y方向直方图，谷的最少黑色像素个数
-#define XHistogramValleyMaxPixelNumber 5         //求X方向直方图，谷的最少黑色像素个数
-#define XHistogramScanningPixelNumber 100        //做X方向直方图，遇到白转黑/黑转白时，向左/右搜索的距离
-#define XHistogramScanningPercentage 0.4
+#define XHistogramValleyMaxPixelNumber 4         //求X方向直方图，谷的最少黑色像素个数
+#define XHistogramLargerScaleThanAvgDist 3       //X方向直方图，分割点所在间距比平均间距大的倍数
 
 #define SubImgBlackPixelPercentage 0.001         //一张子图内黑色像素超过一定百分比才算有数字
 #define NumberImageBlackPixelPercentage 0.35     //单张数字图像黑色像素个数超过所有数字图像
@@ -80,7 +79,7 @@ private:
 	vector<CImg<int>> subImageSet;     //一行行数字图像
 	int imgW, imgH;
 
-	vector<int> inflectionPointSet;    //拐点
+	vector<int> inflectionYPointSet;    //拐点
 	vector<PointPos> divideLinePointSet;    //直方图峰值划分线点集
 
 	int tagAccumulate = -1;            //类别tag累加值

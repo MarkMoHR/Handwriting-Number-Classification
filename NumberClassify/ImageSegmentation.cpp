@@ -211,12 +211,12 @@ void ImageSegmentation::findDividingLine() {
 		if (y > 0) {
 			if (blackPixel <= YHistogramValleyMaxPixelNumber
 				&& HistogramImage(YHistogramValleyMaxPixelNumber, y - 1, 0) == 0) {    //下白上黑：取下
-				inflectionPointSet.push_back(y);
+				inflectionYPointSet.push_back(y);
 				//HistogramImage.draw_line(0, y, HistogramImage._width - 1, y, lineColor);
 			}
 			else if (blackPixel > YHistogramValleyMaxPixelNumber
 				&& HistogramImage(YHistogramValleyMaxPixelNumber, y - 1, 0) != 0) {    //下黑上白：取上
-				inflectionPointSet.push_back(y - 1);
+				inflectionYPointSet.push_back(y - 1);
 				//HistogramImage.draw_line(0, y - 1, HistogramImage._width - 1, y - 1, lineColor);
 			}
 		}
@@ -224,13 +224,59 @@ void ImageSegmentation::findDividingLine() {
 
 	divideLinePointSet.push_back(PointPos(0, -1));
 	//两拐点中间做分割
-	if (inflectionPointSet.size() > 2) {
-		for (int i = 1; i < inflectionPointSet.size() - 1; i = i + 2) {
-			int divideLinePointY = (inflectionPointSet[i] + inflectionPointSet[i + 1]) / 2;
+	if (inflectionYPointSet.size() > 2) {
+		for (int i = 1; i < inflectionYPointSet.size() - 1; i = i + 2) {
+			int divideLinePointY = (inflectionYPointSet[i] + inflectionYPointSet[i + 1]) / 2;
 			divideLinePointSet.push_back(PointPos(0, divideLinePointY));
 		}
 	}
 	divideLinePointSet.push_back(PointPos(0, BinaryImg._height - 1));
+}
+
+//根据X方向直方图判断真实的拐点
+vector<int> getInflectionPosXs(const CImg<int>& XHistogramImage) {
+	vector<int> resultInflectionPosXs;
+	vector<int> tempInflectionPosXs;
+	int totalDist = 0, avgDist;
+	int distNum = 0;
+	//查找拐点
+	cimg_forX(XHistogramImage, x) {
+		if (x >= 1) {
+			//白转黑
+			if (XHistogramImage(x, 0, 0) == 0 && XHistogramImage(x - 1, 0, 0) == 255) {
+				tempInflectionPosXs.push_back(x - 1);
+			}
+			//黑转白
+			else if (XHistogramImage(x, 0, 0) == 255 && XHistogramImage(x - 1, 0, 0) == 0) {
+				tempInflectionPosXs.push_back(x);
+			}
+		}
+	}
+	for (int i = 2; i < tempInflectionPosXs.size() - 1; i = i + 2) {
+		int dist = tempInflectionPosXs[i] - tempInflectionPosXs[i - 1];
+		if (dist <= 0)
+			distNum--;
+		totalDist += dist;
+	}
+
+	//计算间距平均距离
+	distNum += (tempInflectionPosXs.size() - 2) / 2;
+	avgDist = totalDist / distNum;
+	//cout << "avgDist " << avgDist << endl;
+
+	resultInflectionPosXs.push_back(tempInflectionPosXs[0]);    //头
+	//当某个间距大于平均距离的一定倍数时，视为分割点所在间距
+	for (int i = 2; i < tempInflectionPosXs.size() - 1; i = i + 2) {
+		int dist = tempInflectionPosXs[i] - tempInflectionPosXs[i - 1];
+		//cout << "dist " << dist << endl;
+		if (dist > avgDist * XHistogramValleyMaxPixelNumber) {
+			resultInflectionPosXs.push_back(tempInflectionPosXs[i - 1]);
+			resultInflectionPosXs.push_back(tempInflectionPosXs[i]);
+		}
+	}
+	resultInflectionPosXs.push_back(tempInflectionPosXs[tempInflectionPosXs.size() - 1]);  //尾
+
+	return resultInflectionPosXs;
 }
 
 //获取一行行的子图的水平分割线
@@ -260,102 +306,11 @@ vector<int> getDivideLineXofSubImage(const CImg<int>& subImg) {
 		}
 	}
 
-	//查找拐点
-	cimg_forX(XHistogramImage, x) {
-		if (x >= 1) {
-			bool leftSideOK = false;
-			bool rightSideOK = false;
-
-			//白转黑
-			if (XHistogramImage(x, 0, 0) == 0 && XHistogramImage(x - 1, 0, 0) == 255) {
-				leftSideOK = true;
-				rightSideOK = true;
-
-				for (int i = 1; i <= XHistogramScanningPixelNumber; i++) {    //向左扫描
-					int scanPosX = x - i;
-					if (scanPosX >= 0) {
-						if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，即不符合
-							leftSideOK = false;
-							break;
-						}
-					}
-					else
-						break;
-				}
-
-				//当左边符合条件，看右边
-				if (leftSideOK) {
-					int blackPixelNum = 0;
-					int rscan;
-					for (rscan = 1; rscan <= XHistogramScanningPixelNumber; rscan++) {    //向右扫描
-						int scanPosX = x + rscan;
-						if (scanPosX < XHistogramImage._width) {
-							if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，累加
-								blackPixelNum++;
-							}
-						}
-						else
-							break;
-					}
-					double rrate = (double)blackPixelNum / (double)rscan;
-					cout << "black " << blackPixelNum << " rscan " << rscan << " rate " << rrate << endl;
-					//当右边有一定数量的黑色像素时，才视为拐点；否则可能出现‘万白丛中一点黑’的情况
-					if (blackPixelNum < rscan * XHistogramScanningPercentage) {
-						rightSideOK = false;
-					}
-
-				}
-			}
-			//黑转白
-			else if (XHistogramImage(x, 0, 0) == 255 && XHistogramImage(x - 1, 0, 0) == 0) {
-				leftSideOK = true;
-				rightSideOK = true;
-
-				for (int i = 1; i <= XHistogramScanningPixelNumber; i++) {    //向右扫描
-					int scanPosX = x + i;
-					if (scanPosX < XHistogramImage._width) {
-						if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，即不符合
-							rightSideOK = false;
-							break;
-						}
-					}
-					else
-						break;
-				}
-
-				//当右边符合条件，看左边
-				if (rightSideOK) {
-					int blackPixelNum = 0;
-					int lscan;
-					for (lscan = 1; lscan <= XHistogramScanningPixelNumber; lscan++) {    //向左扫描
-						int scanPosX = x - lscan;
-						if (scanPosX >= 0) {
-							if (XHistogramImage(scanPosX, 0, 0) == 0) {    //扫描范围内有黑色，累加
-								blackPixelNum++;
-							}
-						}
-						else
-							break;
-					}
-
-					double lrate = (double)blackPixelNum / (double)lscan;
-					cout << "black " << blackPixelNum << " lscan " << lscan << " rate " << lrate << endl;
-					if (blackPixelNum < lscan * XHistogramScanningPercentage) {
-						leftSideOK = false;
-					}
-				}
-			}
-		
-			//两边检验都通过，视为拐点
-			if (leftSideOK && rightSideOK) {
-				InflectionPosXs.push_back(x);
-			}
-		}
-	}
-
+	InflectionPosXs = getInflectionPosXs(XHistogramImage);    //获取拐点
+	cout << "InflectionPosXs.size() " << InflectionPosXs.size() << endl;
 	for (int i = 0; i < InflectionPosXs.size(); i++)
 		XHistogramImage.draw_line(InflectionPosXs[i], 0, InflectionPosXs[i], XHistogramImage._height - 1, lineColor);
-	XHistogramImage.display("XHistogramImage");
+	//XHistogramImage.display("XHistogramImage");
 
 	//两拐点中间做分割
 	vector<int> dividePosXs;
@@ -402,7 +357,7 @@ void ImageSegmentation::divideIntoBarItemImg() {
 		}
 
 		double blackPercent = (double)blackPixel / (double)(BinaryImg._width * barHeight);
-		cout << "blackPercent " << blackPercent << endl;
+		//cout << "blackPercent " << blackPercent << endl;
 
 		//只有当黑色像素个数超过图像大小一定比例时，才可视作有数字
 		if (blackPercent > SubImgBlackPixelPercentage) {
