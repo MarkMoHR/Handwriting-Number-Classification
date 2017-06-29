@@ -9,8 +9,8 @@
 #include <list>
 using namespace std;
 
-#define NormalizeLow 0.0
-#define NormalizeUp 1.0
+#define NormalizeLow 0.0    //对维度特征归一化的最小值
+#define NormalizeUp 1.0     //对维度特征归一化的最大值
 
 class SVMPredictor
 {

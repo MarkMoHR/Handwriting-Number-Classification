@@ -12,8 +12,8 @@ using namespace cimg_library;
 #define ThetaScale 10
 #define RhoScale 1
 
-#define TopK 13
-#define VertexGap 36
+#define TopK 13          //找线交叉最多的TopK个θ、ρ参数对
+#define VertexGap 36     //直线交点，距离在VertexGap内，视作同一个点
 #define DownSampledSquareSize 500.0
 
 typedef multiset<int, less<int>> IntHeap;

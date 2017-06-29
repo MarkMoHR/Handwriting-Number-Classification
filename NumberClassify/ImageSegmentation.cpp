@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include "ImageSegmentation.h"
+#include <direct.h>
 
 int lineColor[3]{ 255, 0, 0 };
 
@@ -166,7 +167,9 @@ CImg<int> ImageSegmentation::getBinaryImage() {
 }
 
 void ImageSegmentation::numberSegmentationMainProcess(const string baseAddress) {
-	basePath = baseAddress;
+	if (_access(baseAddress.c_str(), 0) == -1)
+		_mkdir(baseAddress.c_str());
+	basePath = baseAddress + "/";
 
 	findDividingLine();
 	divideIntoBarItemImg();
@@ -206,13 +209,13 @@ void ImageSegmentation::findDividingLine() {
 
 		//判断是否为拐点
 		if (y > 0) {
-			if (blackPixel <= HistogramValleyMaxPixelNumber 
-				&& HistogramImage(HistogramValleyMaxPixelNumber, y - 1, 0) == 0) {    //下白上黑：取下
+			if (blackPixel <= YHistogramValleyMaxPixelNumber
+				&& HistogramImage(YHistogramValleyMaxPixelNumber, y - 1, 0) == 0) {    //下白上黑：取下
 				inflectionPointSet.push_back(y);
 				//HistogramImage.draw_line(0, y, HistogramImage._width - 1, y, lineColor);
 			}
-			else if (blackPixel > HistogramValleyMaxPixelNumber
-				&& HistogramImage(HistogramValleyMaxPixelNumber, y - 1, 0) != 0) {    //下黑上白：取上
+			else if (blackPixel > YHistogramValleyMaxPixelNumber
+				&& HistogramImage(YHistogramValleyMaxPixelNumber, y - 1, 0) != 0) {    //下黑上白：取上
 				inflectionPointSet.push_back(y - 1);
 				//HistogramImage.draw_line(0, y - 1, HistogramImage._width - 1, y - 1, lineColor);
 			}
@@ -245,11 +248,14 @@ vector<int> getDivideLineXofSubImage(const CImg<int>& subImg) {
 			if (subImg(x, y, 0) == 0)
 				blackPixel++;
 		}
-		cimg_forY(subImg, y) {
-			if (y < blackPixel) {
-				XHistogramImage(x, y, 0) = 0;
-				XHistogramImage(x, y, 1) = 0;
-				XHistogramImage(x, y, 2) = 0;
+		//对于每一列x，只有黑色像素多于一定值，才绘制在直方图上
+		if (blackPixel >= XHistogramValleyMaxPixelNumber) {
+			cimg_forY(subImg, y) {
+				if (y < blackPixel) {
+					XHistogramImage(x, y, 0) = 0;
+					XHistogramImage(x, y, 1) = 0;
+					XHistogramImage(x, y, 2) = 0;
+				}
 			}
 		}
 	}
@@ -349,7 +355,7 @@ vector<int> getDivideLineXofSubImage(const CImg<int>& subImg) {
 
 	for (int i = 0; i < InflectionPosXs.size(); i++)
 		XHistogramImage.draw_line(InflectionPosXs[i], 0, InflectionPosXs[i], XHistogramImage._height - 1, lineColor);
-	//XHistogramImage.display("XHistogramImage");
+	XHistogramImage.display("XHistogramImage");
 
 	//两拐点中间做分割
 	vector<int> dividePosXs;

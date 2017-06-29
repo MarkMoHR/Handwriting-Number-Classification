@@ -9,9 +9,9 @@
 using namespace std;
 using namespace cimg_library;
 
-#define A4width 210
-#define A4height 297
-#define Scalar 2
+#define A4width 210    //A4纸宽
+#define A4height 297   //A4纸高
+#define Scalar 2       //A4纸矫正图像对于A4纸宽/高的倍数
 
 enum PaperType { PaperHori, PaperVert, PaperDiag };
 

@@ -14,7 +14,7 @@ SVMPredictor::~SVMPredictor() {
 }
 
 SVMPredictor::SVMPredictor(string _basePath) {
-	basePath = _basePath;
+	basePath = _basePath + "/";
 }
 
 void SVMPredictor::readPredictImagelist(string predictImagelistFile) {
