@@ -1,5 +1,10 @@
 #define _CRT_SECURE_NO_WARNINGS
 
+//***************************************************************
+// 使用时期: 此独立代码用于libsvm训练步骤
+// 代码功能: 将mnist的二进制数据转化为jpg格式
+//***************************************************************
+
 #include <iostream>  
 #include <fstream>  
 #include "opencv2/core/core.hpp"  
