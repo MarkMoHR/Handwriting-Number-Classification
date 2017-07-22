@@ -21,7 +21,6 @@ An computer vision project, based on cimg library and svm training, to classify 
 - cimg library : http://www.cimg.eu/
 - opencv (For extracting features of images)
 - libsvm (for training, testing and predicting) : http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-- ......
 
 ---
 
@@ -48,7 +47,6 @@ An computer vision project, based on cimg library and svm training, to classify 
     - Number predicting: 
         - read the number images you segmented just now and do prediction with the trained model
         
-1. ......
 
 ---
 
